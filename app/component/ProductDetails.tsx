@@ -1,16 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { GetProductById } from "../fetchers/fetchgetproduct";
 import type { Product } from "@/lib/types/product";
 
-export default function ProductDetails({ id }: { id: number }) {
+export default function ProductDetails() {
+  const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setProduct(null);
     setError(null);
-    GetProductById(id)
+    GetProductById(Number(id))
       .then(setProduct)
       .catch((e: Error) => setError(e.message));
   }, [id]);

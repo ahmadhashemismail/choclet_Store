@@ -11,5 +11,5 @@ export default async function ProductPage({
 
   if (!Number.isInteger(productId) || productId <= 0) notFound();
 
-  return <ProductDetails id={productId} />;
+  return <ProductDetails />;
 }
