@@ -27,7 +27,7 @@ export default function CategoryDetails() {
   return (
     <div>
       <h2>{category.name}</h2>
-      <p>{category.description}</p>
+      <p>{category.type}</p>
       <ul>
         {products.map((product) => (
           <div key={product.id}>

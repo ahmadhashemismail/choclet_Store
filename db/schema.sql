@@ -1,9 +1,5 @@
--- Categories, mirroring the products table.
-CREATE TABLE IF NOT EXISTS categories (
-  id          SERIAL PRIMARY KEY,
-  name        TEXT NOT NULL,
-  description TEXT NOT NULL DEFAULT ''
-);
+-- The categories table already exists in the database:
+--   id SERIAL PRIMARY KEY, type VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL
 
 -- Link each product to a category (nullable so existing products keep working).
 ALTER TABLE products

@@ -25,7 +25,7 @@ export default function CategoryList() {
             <li>
               <Link href={`/categories/${category.id}`}>{category.name}</Link>
             </li>
-            <li>{category.description}</li>
+            <li>{category.type}</li>
             <hr />
           </div>
         ))}
