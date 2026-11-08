@@ -13,7 +13,13 @@ export async function GET(
   }
 
   try {
-    const res = await pool.query("SELECT * FROM products WHERE id = $1", [productId]);
+    const res = await pool.query(
+      `SELECT p.*, c.name AS category_name
+       FROM products p
+       LEFT JOIN categories c ON c.id = p.category_id
+       WHERE p.id = $1`,
+      [productId]
+    );
     if (res.rows.length === 0) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }

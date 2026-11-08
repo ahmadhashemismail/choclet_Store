@@ -6,11 +6,13 @@ export async function createProductAction(formData: FormData) {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const price = Number(formData.get("price"));
+  const categoryValue = formData.get("category_id") as string | null;
+  const categoryId = categoryValue ? Number(categoryValue) : null;
 
   await pool.query(
-    "insert into products (name, price, description) values ($1, $2, $3)",
-    [name, price, description]
+    "insert into products (name, price, description, category_id) values ($1, $2, $3, $4)",
+    [name, price, description, categoryId]
   );
 
-  revalidatePath("/products"); 
+  revalidatePath("/products");
 }
