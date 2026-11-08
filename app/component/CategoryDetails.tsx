@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { GetCategoryById } from "../fetchers/fetchgetcategory";
-import { GetProduct } from "../fetchers/fetchgetproduct";
+import { GetProductByCategoryId } from "../fetchers/fetchgetproduct";
 import type { Category } from "@/lib/types/category";
 import type { Product } from "@/lib/types/product";
 
@@ -13,7 +13,7 @@ export default function CategoryDetails() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([GetCategoryById(Number(id)), GetProduct(Number(id))])
+    Promise.all([GetCategoryById(Number(id)), GetProductByCategoryId(Number(id))])
       .then(([c, p]) => {
         setCategory(c);
         setProducts(p);
