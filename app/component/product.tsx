@@ -2,7 +2,7 @@
 import {useEffect, useState} from 'react';
 import type {Product} from "@/lib/types/product";
 import {GetProduct} from '../fetchers/fetchgetproduct';
-
+import ProductDetails from './getproductbyid';
 export default function Product() {
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -14,17 +14,17 @@ export default function Product() {
 
     fetchProducts();
   }, []);
-
+const details = (id: number) => {
+  return <ProductDetails id={id} />;
+}
   return (
     <div>
       <h1>Products</h1>
       <ul>
         {products.map((product) => (
-        <div>
+        <div onClick={() =>  details} >
           <li key={product.id}>{product.name}</li>
-          <li>{product.description}</li>
-          <li>${product.price}</li>
-          <hr />
+          <li>${product.price}</li><hr />
           </div>
           
         ))}
