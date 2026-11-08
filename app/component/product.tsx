@@ -1,20 +1,13 @@
 "use client";
-<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import type { Product } from "@/lib/types/product";
+import type { Category } from "@/lib/types/category";
 import { GetProduct } from "../fetchers/fetchgetproduct";
+import { GetCategory } from "../fetchers/fetchgetcategory";
 import ProductDetails from "./ProductDetails";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { DELETE } from "../fetchers/fetchDeleteProduct";
-=======
-import {useEffect, useState} from 'react';
-import type {Product} from "@/lib/types/product";
-import type {Category} from "@/lib/types/category";
-import {GetProduct} from '../fetchers/fetchgetproduct';
-import {GetCategory} from '../fetchers/fetchgetcategory';
-
->>>>>>> c5430830e70be607ff48dae2a6993faae30a4858
 export default function Product() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -56,42 +49,33 @@ export default function Product() {
   return (
     <div>
       <h1>Products</h1>
-<<<<<<< HEAD
-      {products.map((product) => (
-        <Link
-          key={product.id}
-          href={`/products/${product.id}`}
-          style={{ display: "block", cursor: "pointer" }}
-        >
-          <div>
-            <h3>{product.name}</h3>
-            <p>${product.price}</p>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                handleDelete(product.id);
-              }}
-            >
-              Delete
-            </button>
-            <hr />
-          </div>
-        </Link>
-=======
-      {groups.map((group) => (
+    {groups.map((group) => (
         <section key={group.key}>
           <h2>{group.title}</h2>
-          <ul>
-            {group.items.map((product) => (
-              <div key={product.id}>
-                <li>{product.name}</li>
-                <li>${product.price}</li><hr />
+          {group.items.map((product) => (
+            <Link
+              key={product.id}
+              href={`/products/${product.id}`}
+              style={{ display: "block", cursor: "pointer" }}
+            >
+              <div>
+                <h3>{product.name}</h3>
+                <p>${product.price}</p>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete(product.id);
+                  }}
+                >
+                  Delete
+                </button>
+                <hr />
               </div>
-            ))}
-          </ul>
+            </Link>
+          ))}
         </section>
->>>>>>> c5430830e70be607ff48dae2a6993faae30a4858
       ))}
+    
     </div>
   );
 }

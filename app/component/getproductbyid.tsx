@@ -2,14 +2,15 @@
 import { useEffect, useState } from "react";
 import { GetProductById } from "../fetchers/fetchgetproduct";
 import type { Product } from "../../lib/types/product";
+import { useParams } from "next/navigation";
 
 
 export default function ProductDetails() {
+  const { id } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
-const id =Product.id;
   useEffect(() => {
-    GetProductById(id)
+    GetProductById(Number(id))
       .then(setProduct)
       .catch((e: Error) => setError(e.message));
   }, [id]);

@@ -1,8 +1,6 @@
 import {pool} from "@/lib/db"
 import {NextResponse} from "next/server"
 
-// GET /api/product                  -> all products
-// GET /api/product?category_id=3    -> only the products in category 3
 export async function GET(req: Request) {
     const categoryParam = new URL(req.url).searchParams.get("category_id");
 
