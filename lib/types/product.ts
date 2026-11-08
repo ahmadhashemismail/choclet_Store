@@ -4,5 +4,4 @@ export interface Product {
   price: number;
   description: string;
   category_id: number | null;
-  category_name?: string | null;
 }
