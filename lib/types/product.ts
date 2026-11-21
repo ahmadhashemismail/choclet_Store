@@ -7,4 +7,5 @@ export interface Product {
   category_id: number | null;
   Category?: Category | null;
   image_url : string | null;
+  quantity:number;
 }

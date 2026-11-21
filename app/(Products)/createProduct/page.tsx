@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createProductAction } from "@/app/actions/createProductAction";
-import { GetCategory } from "@/app/fetchers/fetchgetcategory";
+import { GetCategory } from "@/app/fetchers/category/fetchgetcategory";
 import type { Category } from "@/lib/types/category";
 
 export default function CreateProduct() {

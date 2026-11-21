@@ -48,16 +48,16 @@ export default function AdminAuthPage() {
             </div>
           </div>
 
-          <section className="admin-auth-card" aria-label="Admin login form">
-            <div className="admin-auth-card__header">LOG IN</div>
-            <div className="admin-auth-card__body">
-              <p className="admin-auth-card__welcome">
+          <section className="admin-auth-cart" aria-label="Admin login form">
+            <div className="admin-auth-cart__header">LOG IN</div>
+            <div className="admin-auth-cart__body">
+              <p className="admin-auth-cart__welcome">
                 Welcome back to <strong>CacaoStore!</strong>
                 <span>Sign in with your admin account</span>
               </p>
               <SignIn
                 routing="hash"
-                forceRedirectUrl="/admin"
+                forceRedirectUrl="/"
                 withSignUp={false}
                 appearance={{
                   variables: {
@@ -68,8 +68,8 @@ export default function AdminAuthPage() {
                   },
                   elements: {
                     rootBox: "admin-auth-clerk-root",
-                    cardBox: "admin-auth-clerk-card-box",
-                    card: "admin-auth-clerk-card",
+                    cartBox: "admin-auth-clerk-cart-box",
+                    cart: "admin-auth-clerk-cart",
                     header: "admin-auth-clerk-hidden",
                     footer: "admin-auth-clerk-hidden",
                     formFieldInput: "admin-auth-clerk-input",

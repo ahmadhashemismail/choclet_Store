@@ -4,9 +4,9 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from"next/image"
 import { useParams, useRouter } from "next/navigation";
-import { GetCategory } from "@/app/fetchers/fetchgetcategory";
-import { GetProductById } from "@/app/fetchers/fetchgetproduct";
-import { updateProduct } from "@/app/fetchers/fetchupdateproduct";
+import { GetCategory } from "@/app/fetchers/category/fetchgetcategory";
+import { getProductById } from "@/app/fetchers/product/fetchgetproduct";
+import { updateProduct } from "@/app/fetchers/product/fetchupdateproduct";
 import { uploadProductImage } from "@/app/actions/uploadProductImage";
 import type { Category } from "@/lib/types/category";
 import type { Product } from "@/lib/types/product";
@@ -27,14 +27,14 @@ function UpdateProductsContent() {
 
     async function load() {
       if (!Number.isInteger(productId) || productId <= 0) {
-        setError("Invalid product id.");
+        setError("Invalid product id 30.");
         setLoading(false);
         return;
       }
 
       try {
         const [loadedProduct, loadedCategories] = await Promise.all([
-          GetProductById(productId),
+          getProductById(productId),
           GetCategory(),
         ]);
         if (!cancelled) {

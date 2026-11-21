@@ -1,6 +1,6 @@
 import type { Product } from "@/lib/types/product";
 
-export async function GetProduct(): Promise<Product[]> {
+export async function getProduct(): Promise<Product[]> {
   const res = await fetch("/api/product", {
     method: "GET",
     headers: { "Content-Type": "application/json" },
@@ -11,7 +11,7 @@ export async function GetProduct(): Promise<Product[]> {
   return data;
 }
 
-export async function GetProductById(id: number): Promise<Product> {
+export async function getProductById(id: number): Promise<Product> {
   const res = await fetch(`/api/product/${id}`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },

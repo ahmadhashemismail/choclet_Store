@@ -5,11 +5,11 @@ export default function ProductGridSkeleton() {
       {Array.from({ length: 3 }, (_, sectionIndex) => (
         <section className="product-grid-skeleton__section" key={sectionIndex}>
           <span className="product-grid-skeleton__block product-grid-skeleton__title" />
-          <div className="product-grid-skeleton__cards">
-            {Array.from({ length: 3 }, (_, cardIndex) => (
+          <div className="product-grid-skeleton__carts">
+            {Array.from({ length: 3 }, (_, cartIndex) => (
               <span
-                className="product-grid-skeleton__block product-grid-skeleton__card"
-                key={cardIndex}
+                className="product-grid-skeleton__block product-grid-skeleton__cart"
+                key={cartIndex}
               />
             ))}
           </div>

@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { DELETE } from "@/app/fetchers/fetchDeleteProduct";
-import { GetCategory } from "@/app/fetchers/fetchgetcategory";
-import { GetProduct } from "@/app/fetchers/fetchgetproduct";
+import { DELETE } from "@/app/fetchers/product/fetchDeleteProduct";
+import { GetCategory } from "@/app/fetchers/category/fetchgetcategory";
+import { getProduct } from "@/app/fetchers/product/fetchgetproduct";
 import type { Category } from "@/lib/types/category";
 import type { Product } from "@/lib/types/product";
 
@@ -26,7 +26,7 @@ export default function AdminDashboard() {
     async function loadAdminData() {
       try {
         const [productList, categoryList] = await Promise.all([
-          GetProduct(),
+          getProduct(),
           GetCategory(),
         ]);
         if (!cancelled) {

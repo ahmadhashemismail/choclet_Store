@@ -15,9 +15,17 @@ export default function Header() {
       </Link>
       <nav className="storefront__nav" aria-label="Store navigation">
         <Authantication />
-        <a href="#favorites">Our chocolates</a>
-        <a href="#shop">Shop</a>
-      </nav>
+        <Link
+          href="/favorite"
+          className="storefront__favorite"
+          aria-label="View favorites"
+          title="Favorites"
+        >
+          ♡
+        </Link>
+<Link href="/cartPage" className="storefront__cart" aria-label="View cart">
+  <img src="/cart.svg" alt="" width={44} height={44} />
+</Link>      </nav>
     </header>
   );
 }

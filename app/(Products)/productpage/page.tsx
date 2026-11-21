@@ -2,16 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image"
-import { GetCategory } from "@/app/fetchers/fetchgetcategory";
+import Image from "next/image";
+import { GetCategory } from "@/app/fetchers/category/fetchgetcategory";
 import type { Product } from "@/lib/types/product";
 import type { Category } from "@/lib/types/category";
-import { GetProduct } from "../../fetchers/fetchgetproduct";
-import { DELETE } from "../../fetchers/fetchDeleteProduct";
+import { getProduct } from "../../fetchers/product/fetchgetproduct";
+import { DELETE } from "../../fetchers/product/fetchDeleteProduct";
+import { AddProductToCart } from "@/app/fetchers/cart/fetchGetFromCard";
 import CreateProduct from "@/app/(Products)/createProduct/page";
 import ProductGridSkeleton from "@/app/(component)/ProductGridSkeleton/page";
 import CreateCategory from "@/app/(Products)/createCategory/page";
-import Header from "@/app/(component)/Header/page"
+import Header from "@/app/(component)/Header/page";
+import AddToCartloading from "@/app/(component)/loading/addTocardloading/page";
 type ProductGroup = {
   key: string;
   name?: string;
@@ -43,22 +45,23 @@ export default function ProductList() {
   const [productMessage, setProductMessage] = useState<string | null>(null);
   const [savingCategory, setSavingCategory] = useState(false);
   const [savingProduct, setSavingProduct] = useState(false);
+  const [addingProductId, setAddingProductId] = useState<number | null>(null);
+  const [addedProductId, setAddedProductId] = useState<number | null>(null);
+  const [carouselTurn, setCarouselTurn] = useState(0);
   const productFormRef = useRef<HTMLFormElement>(null);
   const categoryFormRef = useRef<HTMLFormElement>(null);
 
-  async function loadCategories(): Promise<boolean> {
+  async function loadCategories() {
     try {
       const result = await GetCategory();
       setCategories(Array.isArray(result) ? result : []);
       setCategoryError(null);
-      return true;
     } catch (loadError) {
       setCategoryError(
         loadError instanceof Error
           ? loadError.message
           : "Failed to load categories.",
       );
-      return false;
     }
   }
 
@@ -67,7 +70,7 @@ export default function ProductList() {
 
     async function fetchProducts() {
       try {
-        const result = await GetProduct();
+        const result = await getProduct();
         if (!cancelled) setProducts(Array.isArray(result) ? result : []);
       } catch (fetchError) {
         if (!cancelled) {
@@ -114,6 +117,23 @@ export default function ProductList() {
     }
   };
 
+  async function handleAddToCart(product: Product) {
+    setAddingProductId(product.id);
+    setError(null);
+    try {
+      await AddProductToCart(product.id);
+      setAddedProductId(product.id);
+    } catch (addError) {
+      setError(
+        addError instanceof Error
+          ? addError.message
+          : "Failed to add product to cart.",
+      );
+    } finally {
+      setAddingProductId(null);
+    }
+  }
+
   const groups = products.reduce<ProductGroup[]>((result, product) => {
     const categoryId = product.category_id;
     const category = categories.find((item) => item.id === categoryId);
@@ -130,53 +150,128 @@ export default function ProductList() {
     group.items.push(product);
     return result;
   }, []);
+  const carouselItems =
+    groups.length === 0
+      ? []
+      : Array.from({ length: Math.max(groups.length, 8) }, (_, index) => ({
+          group: groups[index % groups.length],
+          index,
+        }));
+  const carouselStep = 360 / Math.max(carouselItems.length, 1);
 
   return (
     <main className="storefront" id="top">
-    <Header/>
-
-      <section className="storefront__hero">
-        <p className="storefront__eyebrow">Small batch · Thoughtfully made</p>
-        <h1>
-          A little more
-          <br />
-          love in every bite.
-        </h1>
-        <p className="storefront__intro">
-          Organic, fair-trade chocolate crafted slowly and shared generously.
-        </p>
-        <a className="storefront__button storefront__button--dark" href="#shop">
-          Discover our chocolate
-        </a>
-        <div className="storefront__hero-art">
-          <ChocolateArt variant={0} />
-        </div>
-      </section>
-
-      <section className="storefront__favorites" id="favorites">
-        <div className="storefront__section-heading">
-          <span className="storefront__eyebrow">A few things we love</span>
-          <h2>Our best products</h2>
+      <Header />
+      <section className="storefront__experience" id="favorites">
+        <div className="storefront__experience-heading">
+          <p>Small batch · Thoughtfully made</p>
+          <h1>Find your favorite.</h1>
         </div>
         {loading ? (
-          <p className="storefront__message">Finding something delicious...</p>
-        ) : groups.length === 0 ? (
-          <p className="storefront__message">
+          <p className="storefront__experience-message">
+            Finding something delicious...
+          </p>
+        ) : carouselItems.length === 0 ? (
+          <p className="storefront__experience-message">
             Our chocolate collection is coming soon.
           </p>
         ) : (
-          <div className="storefront__favorites-grid">
-            {groups.slice(0, 4).map((group, index) => (
-              <a
-                className={`favorite-card favorite-card--${index % 4}`}
-                href="#shop"
-                key={group.key}
-              >
-                <span className="favorite-card__name">{group.name}</span>
-                <span className="favorite-card__subtitle">{group.name}</span>
-                <ChocolateArt variant={index} />
-              </a>
-            ))}
+          <div
+            className="storefront__carousel"
+            role="region"
+            aria-label="Chocolate category carousel"
+          >
+            <div className="storefront__carousel-glow" aria-hidden="true" />
+            <div
+              className="storefront__carousel-ring"
+              style={{
+                transform: `translate(-50%, -50%) rotateY(${carouselTurn}deg)`,
+              }}
+            >
+              <div className="storefront__carousel-track" role="list">
+                {carouselItems.map(({ group, index }) => {
+                  const featuredProduct = group.items[0];
+                  const angle = (360 * index) / carouselItems.length;
+
+                  return (
+                    <div
+                      className="storefront__carousel-item"
+                      style={{
+                        transform: `rotateY(${angle}deg) translateZ(var(--carousel-radius))`,
+                      }}
+                      key={`${group.key}-${index}`}
+                      role={index < groups.length ? "listitem" : undefined}
+                      aria-hidden={index >= groups.length ? true : undefined}
+                    >
+                      <a
+                        className={`storefront__carousel-cart storefront__carousel-cart--${index % 4}`}
+                        href={`#category-${group.key}`}
+                        aria-label={`${group.name}, ${group.items.length} chocolates`}
+                        tabIndex={index < groups.length ? undefined : -1}
+                      >
+                        <span className="storefront__carousel-face storefront__carousel-face--front">
+                          <span className="storefront__carousel-image">
+                            {featuredProduct?.image_url ? (
+                              <Image
+                                src={featuredProduct.image_url}
+                                alt=""
+                                width={300}
+                                height={240}
+                                unoptimized
+                              />
+                            ) : (
+                              <ChocolateArt variant={index} />
+                            )}
+                          </span>
+                          <span className="storefront__carousel-meta">
+                            <span className="storefront__carousel-name">
+                              {group.name}
+                            </span>
+                            <span className="storefront__carousel-count">
+                              {group.items.length}{" "}
+                              {group.items.length === 1
+                                ? "chocolate"
+                                : "chocolates"}
+                            </span>
+                          </span>
+                        </span>
+                        <span
+                          className="storefront__carousel-face storefront__carousel-face--back"
+                          aria-hidden="true"
+                        >
+                          <span className="storefront__carousel-back-label">
+                            CACAO COLLECTION
+                          </span>
+                          <span className="storefront__carousel-back-name">
+                            {group.name}
+                          </span>
+                          <ChocolateArt variant={index} />
+                        </span>
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <button
+              className="storefront__carousel-control storefront__carousel-control--previous"
+              type="button"
+              aria-label="Show previous chocolate category"
+              onClick={() => setCarouselTurn((turn) => turn - carouselStep)}
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <button
+              className="storefront__carousel-control storefront__carousel-control--next"
+              type="button"
+              aria-label="Show next chocolate category"
+              onClick={() => setCarouselTurn((turn) => turn + carouselStep)}
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+            <a className="storefront__experience-cta" href="#shop">
+              Explore the collection <span aria-hidden="true">↓</span>
+            </a>
           </div>
         )}
       </section>
@@ -201,19 +296,23 @@ export default function ProductList() {
         ) : (
           <div className="storefront__groups">
             {groups.map((group) => (
-              <section className="storefront__product-group" key={group.key}>
+              <section
+                className="storefront__product-group"
+                id={`category-${group.key}`}
+                key={group.key}
+              >
                 <h3 className="storefront__group-title">{group.name}</h3>
                 <div className="storefront__products">
                   {group.items.map((product, index) => (
-                    <article className="product-card" key={product.id}>
+                    <article className="product-cart" key={product.id}>
                       <Link
-                        className="product-card__image"
+                        className="product-cart__image"
                         href={`/${product.id}`}
                         aria-label={`View ${product.name}`}
                       >
                         {product.image_url ? (
                           <Image
-                            className="product-card__photo"
+                            className="product-cart__photo"
                             src={product.image_url}
                             alt={product.name}
                             width={300}
@@ -224,22 +323,49 @@ export default function ProductList() {
                           <ChocolateArt variant={index} />
                         )}
                       </Link>
-                      <div className="product-card__details">
+                      <div className="product-cart__details">
                         <Link
-                          className="product-card__name"
+                          className="product-cart__name"
                           href={`/${product.id}`}
                         >
                           {product.name}
                         </Link>
-                        <p className="product-card__category">
+                        <p className="product-cart__category">
                           {categories.find(
                             (category) => category.id === product.category_id,
                           )?.name || "Handcrafted chocolate"}
                         </p>
-                        <p className="product-card__price">
-                          ${Number(product.price).toFixed(2)}
-                        </p>
-                       
+                        <div className="product-cart__purchase">
+                          <p className="product-cart__price">
+                            ${Number(product.price).toFixed(2)}
+                          </p>
+                          <button
+                            className="product-cart__cart-button"
+                            type="button"
+                            disabled={addingProductId === product.id}
+                            aria-label={
+                              addedProductId === product.id
+                                ? `${product.name} added to cart`
+                                : `Add ${product.name} to cart`
+                            }
+                            title={
+                              addedProductId === product.id
+                                ? "Added to cart"
+                                : "Add to cart"
+                            }
+                            onClick={() => void handleAddToCart(product)}
+                          >
+                            <span aria-hidden="true">
+                              {addingProductId === product.id ? (
+                                <AddToCartloading />
+                              ) : addedProductId === product.id ? (
+                                "✓"
+                              ) : (
+                                "🛒"
+                              )}
+                            </span>
+                          </button>
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -248,14 +374,6 @@ export default function ProductList() {
             ))}
           </div>
         )}
-      </section>
-      <section className="storefront__manage" id="add-to-store">
-        <div className="storefront__section-heading">
-          <span className="storefront__eyebrow">A little more cacao</span>
-          <h2>Grow your collection</h2>
-          <p>Bring a new chocolate or category to the counter.</p>
-        </div>
-        <div className="storefront__forms"></div>
       </section>
 
       <footer className="storefront__footer">
