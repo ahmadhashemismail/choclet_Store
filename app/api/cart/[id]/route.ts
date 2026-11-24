@@ -13,6 +13,9 @@ export async function DELETE(
 
   const { id } = await params;
   const productId = Number(id);
+  if (!Number.isInteger(productId) || productId <= 0) {
+    return NextResponse.json({ error: "Invalid product" }, { status: 400 });
+  }
   try {
     const res = await pool.query(
       "DELETE FROM cart WHERE product_id = $1 AND account_id = $2 RETURNING *",
@@ -38,6 +41,9 @@ export async function PUT(
 
   const { id } = await params;
   const productId = Number(id);
+  if (!Number.isInteger(productId) || productId <= 0) {
+    return NextResponse.json({ error: "Invalid product" }, { status: 400 });
+  }
   const { quantity } = await req.json();
   if (!Number.isInteger(quantity) || quantity < 1) {
     return NextResponse.json({ error: "Quantity must be at least 1" }, { status: 400 });

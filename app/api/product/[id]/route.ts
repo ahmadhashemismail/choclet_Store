@@ -9,8 +9,8 @@ export async function GET(
   const { id } = await params;
   const productId = Number(id);
 
-  if (!Number(productId) || productId <= 0) {
-    return NextResponse.json({ error: "Invalid product id  13" }, { status: 400 });
+  if (!Number(productId)) {
+    return NextResponse.json({ error: "Invalid product id " }, { status: 400 });
   }
 
   try {

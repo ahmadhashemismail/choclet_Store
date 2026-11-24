@@ -11,8 +11,16 @@ export async function POST(req: Request) {
 
     const { product_id } = await req.json();
 
-    if (!product_id) {
-      return NextResponse.json({ error: "There is no product" }, { status: 400 });
+    if (!Number.isInteger(product_id) || product_id <= 0) {
+      return NextResponse.json({ error: "Invalid product" }, { status: 400 });
+    }
+
+    const existing = await pool.query(
+      "SELECT product_id FROM favorite WHERE product_id = $1 AND account_id = $2",
+      [product_id, accountId],
+    );
+    if (existing.rows.length > 0) {
+      return NextResponse.json(existing.rows[0], { status: 200 });
     }
 
     const result = await pool.query(

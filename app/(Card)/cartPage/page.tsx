@@ -5,16 +5,20 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/app/(component)/Header/page";
 import { getProductById } from "@/app/fetchers/product/fetchgetproduct";
-import { GetCartProduct } from "@/app/fetchers/cart/fetchGetFromCard";
+import { GetCartProduct, RemoveProductFromCart } from "@/app/fetchers/cart/fetchGetFromCard";
 import {updateQuantity} from "@/app/fetchers/cart/fetchUpadatequantity"
 import type { Product } from "@/lib/types/product";
 import Loading from "@/app/(component)/loading/page"
 import { useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 export default function CartItem() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const router = useRouter();
   const [cartitem, setCartitem] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updatingProductId, setUpdatingProductId] = useState<number | null>(null);
+  const [removingProductIds, setRemovingProductIds] = useState<Set<number>>(new Set());
   const itemCount = cartitem.reduce(
     (count, item) => count + Number(item.quantity || 0),
     0,
@@ -28,6 +32,12 @@ export default function CartItem() {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      router.replace("/auth");
+      return;
+    }
 
     async function loadCart() {
       try {
@@ -55,7 +65,7 @@ export default function CartItem() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isLoaded, isSignedIn, router]);
   const quantityTimers = useRef(
   new Map<number, ReturnType<typeof setTimeout>>(),
 );
@@ -93,6 +103,33 @@ async function changeQuantity(item: Product, quantity: number) {
   }, 1000);
 
   quantityTimers.current.set(item.id, timer);
+}
+
+async function removeFromCart(item: Product) {
+  const timer = quantityTimers.current.get(item.id);
+  if (timer) {
+    clearTimeout(timer);
+    quantityTimers.current.delete(item.id);
+  }
+
+  setRemovingProductIds((current) => new Set(current).add(item.id));
+  setError(null);
+  try {
+    await RemoveProductFromCart(item.id);
+    setCartitem((current) => current.filter((product) => product.id !== item.id));
+  } catch (removeError) {
+    setError(
+      removeError instanceof Error
+        ? removeError.message
+        : "Failed to remove product from cart.",
+    );
+  } finally {
+    setRemovingProductIds((current) => {
+      const next = new Set(current);
+      next.delete(item.id);
+      return next;
+    });
+  }
 }
   
 
@@ -152,13 +189,22 @@ async function changeQuantity(item: Product, quantity: number) {
                     <Link className="cart-line__link" href={`/${item.id}`}>
                       View product
                     </Link>
+                    <button
+                      className="cart-line__remove"
+                      type="button"
+                      disabled={removingProductIds.has(item.id)}
+                      onClick={() => void removeFromCart(item)}
+                      aria-label={`Remove ${item.name} from cart`}
+                    >
+                      {removingProductIds.has(item.id) ? "Removing…" : "Remove"}
+                    </button>
                   </div>
                   <div className="cart-line__actions">
                     <div className="cart-quantity" aria-label={`Quantity ${item.quantity}`}>
                       <button
                         type="button"
                         aria-label={`Decrease quantity of ${item.name}`}
-                        disabled={updatingProductId === item.id || item.quantity <= 1}
+                        disabled={removingProductIds.has(item.id) || item.quantity <= 1}
                         onClick={() => void changeQuantity(item, item.quantity - 1)}
                       >
                         −
@@ -167,8 +213,8 @@ async function changeQuantity(item: Product, quantity: number) {
                       <button
                         type="button"
                         aria-label={`Increase quantity of ${item.name}`}
-                        disabled={updatingProductId === item.id}
-                                                onClick={() => void changeQuantity(item, item.quantity + 1)}
+                        disabled={removingProductIds.has(item.id)}
+                        onClick={() => void changeQuantity(item, item.quantity + 1)}
 
                       >
                         +

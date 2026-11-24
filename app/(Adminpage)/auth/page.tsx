@@ -1,105 +1,69 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignIn, SignUpButton } from "@clerk/nextjs";
+import Link from "next/link";
 
-export default function AdminAuthPage() {
+export default function AuthPage() {
   return (
-    <main className="admin-auth-page">
-      <div className="admin-auth-shell">
-        <header className="admin-auth-header">
-          <div className="admin-auth-brand" aria-label="Cacao Store home">
-            <span className="admin-auth-brand__mark">C</span>
-            <span className="admin-auth-brand__text">CacaoStore</span>
+    <main className="auth-page">
+      <section className="auth-story" aria-label="Cacao and Co.">
+        <Link className="auth-brand" href="/">Cacao &amp; Co.</Link>
+
+        <div className="auth-story__content">
+          <div className="auth-chocolate" aria-hidden="true">
+            {Array.from({ length: 12 }, (_, index) => (
+              <span key={index} />
+            ))}
           </div>
-
-          <nav className="admin-auth-nav" aria-label="Main navigation">
-            <a href="#">Chocolate Catalog</a>
-            <a href="#">Special Offers</a>
-            <a href="#">Payment &amp; Delivery</a>
-            <a href="#">Support</a>
-            <a href="#">Contacts</a>
-          </nav>
-
-          <div className="admin-auth-tools" aria-label="Account actions">
-            <button type="button" className="admin-auth-lang">
-              EN
-            </button>
-            <button type="button" className="admin-auth-icon" aria-label="Profile">
-              <span>◔</span>
-            </button>
-            <button type="button" className="admin-auth-icon" aria-label="Favorites">
-              <span>♡</span>
-            </button>
-            <button type="button" className="admin-auth-icon" aria-label="Cart">
-              <span>🛒</span>
-            </button>
-          </div>
-        </header>
-
-        <div className="admin-auth-body">
-          <div className="admin-auth-illustration" aria-hidden="true">
-            <div className="admin-auth-laptop">
-              <div className="admin-auth-laptop__screen">
-                <div className="admin-auth-stack admin-auth-stack--left">
-                  <span className="admin-auth-block admin-auth-block--light" />
-                  <span className="admin-auth-block admin-auth-block--rose" />
-                  <span className="admin-auth-block admin-auth-block--gold" />
-                </div>
-              </div>
-              <div className="admin-auth-laptop__base" />
-            </div>
-          </div>
-
-          <section className="admin-auth-cart" aria-label="Admin login form">
-            <div className="admin-auth-cart__header">LOG IN</div>
-            <div className="admin-auth-cart__body">
-              <p className="admin-auth-cart__welcome">
-                Welcome back to <strong>CacaoStore!</strong>
-                <span>Sign in with your admin account</span>
-              </p>
-              <SignIn
-                routing="hash"
-                forceRedirectUrl="/"
-                withSignUp={false}
-                appearance={{
-                  variables: {
-                    colorBackground: "#f4e2be",
-                    colorInput: "#fffdf9",
-                    colorPrimary: "#dc6a4a",
-                    borderRadius: "6px",
-                  },
-                  elements: {
-                    rootBox: "admin-auth-clerk-root",
-                    cartBox: "admin-auth-clerk-cart-box",
-                    cart: "admin-auth-clerk-cart",
-                    header: "admin-auth-clerk-hidden",
-                    footer: "admin-auth-clerk-hidden",
-                    formFieldInput: "admin-auth-clerk-input",
-                    formButtonPrimary: "admin-auth-clerk-submit",
-                  },
-                }}
-              />
-            </div>
-          </section>
-
-          <div className="admin-auth-illustration admin-auth-illustration--right" aria-hidden="true">
-            <div className="admin-auth-stack admin-auth-stack--right">
-              <span className="admin-auth-block admin-auth-block--gold" />
-              <span className="admin-auth-block admin-auth-block--rose" />
-              <span className="admin-auth-block admin-auth-block--terracotta" />
-              <span className="admin-auth-block admin-auth-block--dark" />
-            </div>
-          </div>
+          <h1>Good chocolate is<br />worth the wait.</h1>
+          <p>Sign in to track your orders, save your favourite bars<br className="auth-desktop-break" /> and check out faster.</p>
         </div>
+      </section>
 
-        <div className="admin-auth-footer-art" aria-hidden="true">
-          <div className="admin-auth-stack admin-auth-stack--bottom">
-            <span className="admin-auth-block admin-auth-block--light" />
-            <span className="admin-auth-block admin-auth-block--gold" />
-            <span className="admin-auth-block admin-auth-block--rose" />
-            <span className="admin-auth-block admin-auth-block--terracotta" />
-            <span className="admin-auth-block admin-auth-block--dark" />
-          </div>
+      <section className="auth-panel" aria-label="Sign in to your account">
+        <div className="auth-panel__inner">
+          <header className="auth-heading">
+            <h2>Welcome back</h2>
+            <p>Sign in to your account to continue.</p>
+          </header>
+
+          <SignIn
+            routing="hash"
+            forceRedirectUrl="/"
+            withSignUp={false}
+            appearance={{
+              variables: {
+                colorBackground: "#fbf4eb",
+                colorInput: "#fffdfa",
+                colorPrimary: "#321a14",
+                colorText: "#25150f",
+                colorTextSecondary: "#765d50",
+                borderRadius: "12px",
+              },
+              elements: {
+                rootBox: "auth-clerk-root",
+                cardBox: "auth-clerk-card-box",
+                card: "auth-clerk-card",
+                header: "auth-clerk-hidden",
+                footer: "auth-clerk-hidden",
+                formFieldLabel: "auth-clerk-label",
+                formFieldInput: "auth-clerk-input",
+                formButtonPrimary: "auth-clerk-submit",
+                formFieldAction: "auth-clerk-action",
+                identityPreview: "auth-clerk-preview",
+                dividerRow: "auth-clerk-divider",
+                socialButtons: "auth-clerk-socials",
+              },
+            }}
+          />
+
+          <div className="auth-or" aria-hidden="true"><span>or</span></div>
+          <Link className="auth-guest" href="/">Continue as guest</Link>
+          <p className="auth-signup">
+            New here? <SignUpButton mode="modal" forceRedirectUrl="/">
+              <button type="button">Create an account</button>
+            </SignUpButton>
+          </p>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

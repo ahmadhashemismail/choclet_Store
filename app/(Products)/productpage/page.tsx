@@ -7,13 +7,16 @@ import { GetCategory } from "@/app/fetchers/category/fetchgetcategory";
 import type { Product } from "@/lib/types/product";
 import type { Category } from "@/lib/types/category";
 import { getProduct } from "../../fetchers/product/fetchgetproduct";
-import { DELETE } from "../../fetchers/product/fetchDeleteProduct";
 import { AddProductToCart } from "@/app/fetchers/cart/fetchGetFromCard";
-import CreateProduct from "@/app/(Products)/createProduct/page";
 import ProductGridSkeleton from "@/app/(component)/ProductGridSkeleton/page";
 import CreateCategory from "@/app/(Products)/createCategory/page";
 import Header from "@/app/(component)/Header/page";
 import AddToCartloading from "@/app/(component)/loading/addTocardloading/page";
+import Mainpageloading from "@/app/(component)/loading/loadingMainpage/page";
+import FavoriteButton from "@/app/(component)/favoriteIcon/page";
+import { useAuth } from "@clerk/nextjs";
+import { addFavoriteProduct } from "@/app/fetchers/favorite/fetchFavoriteProduct";
+import { useRouter } from "next/navigation";
 type ProductGroup = {
   key: string;
   name?: string;
@@ -35,8 +38,12 @@ function ChocolateArt({ variant = 0 }: { variant?: number }) {
 
 <ProductGridSkeleton />;
 
-export default function ProductList() {
+export default function Product() {
+  const { isLoaded, isSignedIn } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [favoriteProductIds, setFavoriteProductIds] = useState<Set<number>>(
+    new Set(),
+  );
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +57,7 @@ export default function ProductList() {
   const [carouselTurn, setCarouselTurn] = useState(0);
   const productFormRef = useRef<HTMLFormElement>(null);
   const categoryFormRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
   async function loadCategories() {
     try {
@@ -104,19 +112,6 @@ export default function ProductList() {
     };
   }, []);
 
-  const handleDelete = async (id: number) => {
-    try {
-      await DELETE(id);
-      setProducts((current) => current.filter((product) => product.id !== id));
-    } catch (deleteError) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Failed to delete product.",
-      );
-    }
-  };
-
   async function handleAddToCart(product: Product) {
     setAddingProductId(product.id);
     setError(null);
@@ -131,6 +126,16 @@ export default function ProductList() {
       );
     } finally {
       setAddingProductId(null);
+    }
+  }
+  async function handleAddToFavorite(product: Product) {
+    try {
+      await addFavoriteProduct(product.id);
+    } catch (error) {
+      setError(
+        "can't add this product to favorite please try again or contact support",
+      );
+      console.log("falied to add to favorite page");
     }
   }
 
@@ -161,121 +166,126 @@ export default function ProductList() {
 
   return (
     <main className="storefront" id="top">
-      <Header />
-      <section className="storefront__experience" id="favorites">
-        <div className="storefront__experience-heading">
-          <p>Small batch · Thoughtfully made</p>
-          <h1>Find your favorite.</h1>
+      {loading ? (
+        <div className="storefront__experience-message">
+          <Mainpageloading />
         </div>
-        {loading ? (
-          <p className="storefront__experience-message">
-            Finding something delicious...
-          </p>
-        ) : carouselItems.length === 0 ? (
-          <p className="storefront__experience-message">
-            Our chocolate collection is coming soon.
-          </p>
-        ) : (
-          <div
-            className="storefront__carousel"
-            role="region"
-            aria-label="Chocolate category carousel"
-          >
-            <div className="storefront__carousel-glow" aria-hidden="true" />
-            <div
-              className="storefront__carousel-ring"
-              style={{
-                transform: `translate(-50%, -50%) rotateY(${carouselTurn}deg)`,
-              }}
-            >
-              <div className="storefront__carousel-track" role="list">
-                {carouselItems.map(({ group, index }) => {
-                  const featuredProduct = group.items[0];
-                  const angle = (360 * index) / carouselItems.length;
-
-                  return (
-                    <div
-                      className="storefront__carousel-item"
-                      style={{
-                        transform: `rotateY(${angle}deg) translateZ(var(--carousel-radius))`,
-                      }}
-                      key={`${group.key}-${index}`}
-                      role={index < groups.length ? "listitem" : undefined}
-                      aria-hidden={index >= groups.length ? true : undefined}
-                    >
-                      <a
-                        className={`storefront__carousel-cart storefront__carousel-cart--${index % 4}`}
-                        href={`#category-${group.key}`}
-                        aria-label={`${group.name}, ${group.items.length} chocolates`}
-                        tabIndex={index < groups.length ? undefined : -1}
-                      >
-                        <span className="storefront__carousel-face storefront__carousel-face--front">
-                          <span className="storefront__carousel-image">
-                            {featuredProduct?.image_url ? (
-                              <Image
-                                src={featuredProduct.image_url}
-                                alt=""
-                                width={300}
-                                height={240}
-                                unoptimized
-                              />
-                            ) : (
-                              <ChocolateArt variant={index} />
-                            )}
-                          </span>
-                          <span className="storefront__carousel-meta">
-                            <span className="storefront__carousel-name">
-                              {group.name}
-                            </span>
-                            <span className="storefront__carousel-count">
-                              {group.items.length}{" "}
-                              {group.items.length === 1
-                                ? "chocolate"
-                                : "chocolates"}
-                            </span>
-                          </span>
-                        </span>
-                        <span
-                          className="storefront__carousel-face storefront__carousel-face--back"
-                          aria-hidden="true"
-                        >
-                          <span className="storefront__carousel-back-label">
-                            CACAO COLLECTION
-                          </span>
-                          <span className="storefront__carousel-back-name">
-                            {group.name}
-                          </span>
-                          <ChocolateArt variant={index} />
-                        </span>
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
+      ) : (
+        <>
+          <Header />
+          <section className="storefront__experience" id="favorites">
+            <div className="storefront__experience-heading">
+              <p>Small batch · Thoughtfully made</p>
+              <h1>Find your favorite.</h1>
             </div>
-            <button
-              className="storefront__carousel-control storefront__carousel-control--previous"
-              type="button"
-              aria-label="Show previous chocolate category"
-              onClick={() => setCarouselTurn((turn) => turn - carouselStep)}
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
-            <button
-              className="storefront__carousel-control storefront__carousel-control--next"
-              type="button"
-              aria-label="Show next chocolate category"
-              onClick={() => setCarouselTurn((turn) => turn + carouselStep)}
-            >
-              <span aria-hidden="true">›</span>
-            </button>
-            <a className="storefront__experience-cta" href="#shop">
-              Explore the collection <span aria-hidden="true">↓</span>
-            </a>
-          </div>
-        )}
-      </section>
+            {carouselItems.length === 0 ? (
+              <p className="storefront__experience-message">
+                Our chocolate collection is coming soon.
+              </p>
+            ) : (
+              <div
+                className="storefront__carousel"
+                role="region"
+                aria-label="Chocolate category carousel"
+              >
+                <div className="storefront__carousel-glow" aria-hidden="true" />
+                <div
+                  className="storefront__carousel-ring"
+                  style={{
+                    transform: `translate(-50%, -50%) rotateY(${carouselTurn}deg)`,
+                  }}
+                >
+                  <div className="storefront__carousel-track" role="list">
+                    {carouselItems.map(({ group, index }) => {
+                      const featuredProduct = group.items[0];
+                      const angle = (360 * index) / carouselItems.length;
 
+                      return (
+                        <div
+                          className="storefront__carousel-item"
+                          style={{
+                            transform: `rotateY(${angle}deg) translateZ(var(--carousel-radius))`,
+                          }}
+                          key={`${group.key}-${index}`}
+                          role={index < groups.length ? "listitem" : undefined}
+                          aria-hidden={
+                            index >= groups.length ? true : undefined
+                          }
+                        >
+                          <a
+                            className={`storefront__carousel-cart storefront__carousel-cart--${index % 4}`}
+                            href={`#category-${group.key}`}
+                            aria-label={`${group.name}, ${group.items.length} chocolates`}
+                            tabIndex={index < groups.length ? undefined : -1}
+                          >
+                            <span className="storefront__carousel-face storefront__carousel-face--front">
+                              <span className="storefront__carousel-image">
+                                {featuredProduct?.image_url ? (
+                                  <Image
+                                    src={featuredProduct.image_url}
+                                    alt=""
+                                    width={300}
+                                    height={240}
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <ChocolateArt variant={index} />
+                                )}
+                              </span>
+                              <span className="storefront__carousel-meta">
+                                <span className="storefront__carousel-name">
+                                  {group.name}
+                                </span>
+                                <span className="storefront__carousel-count">
+                                  {group.items.length}{" "}
+                                  {group.items.length === 1
+                                    ? "chocolate"
+                                    : "chocolates"}
+                                </span>
+                              </span>
+                            </span>
+                            <span
+                              className="storefront__carousel-face storefront__carousel-face--back"
+                              aria-hidden="true"
+                            >
+                              <span className="storefront__carousel-back-label">
+                                CACAO COLLECTION
+                              </span>
+                              <span className="storefront__carousel-back-name">
+                                {group.name}
+                              </span>
+                              <ChocolateArt variant={index} />
+                            </span>
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button
+                  className="storefront__carousel-control storefront__carousel-control--previous"
+                  type="button"
+                  aria-label="Show previous chocolate category"
+                  onClick={() => setCarouselTurn((turn) => turn - carouselStep)}
+                >
+                  <span aria-hidden="true">‹</span>
+                </button>
+                <button
+                  className="storefront__carousel-control storefront__carousel-control--next"
+                  type="button"
+                  aria-label="Show next chocolate category"
+                  onClick={() => setCarouselTurn((turn) => turn + carouselStep)}
+                >
+                  <span aria-hidden="true">›</span>
+                </button>
+                <a className="storefront__experience-cta" href="#shop">
+                  Explore the collection <span aria-hidden="true">↓</span>
+                </a>
+              </div>
+            )}
+          </section>
+        </>
+      )}
       <section className="storefront__shop" id="shop">
         <div className="storefront__section-heading storefront__section-heading--light">
           <span className="storefront__eyebrow">Made for sharing (or not)</span>
@@ -305,6 +315,16 @@ export default function ProductList() {
                 <div className="storefront__products">
                   {group.items.map((product, index) => (
                     <article className="product-cart" key={product.id}>
+                        <span
+              className="favorite-product__remove"
+              onClick={() =>
+                !isSignedIn
+                  ? router.replace("/auth")
+                  : handleAddToFavorite(product)
+              }
+            >
+              <FavoriteButton />
+            </span>
                       <Link
                         className="product-cart__image"
                         href={`/${product.id}`}
@@ -323,7 +343,7 @@ export default function ProductList() {
                           <ChocolateArt variant={index} />
                         )}
                       </Link>
-                      <div className="product-cart__details">
+
                         <Link
                           className="product-cart__name"
                           href={`/${product.id}`}
@@ -339,32 +359,33 @@ export default function ProductList() {
                           <p className="product-cart__price">
                             ${Number(product.price).toFixed(2)}
                           </p>
-                          <button
-                            className="product-cart__cart-button"
-                            type="button"
-                            disabled={addingProductId === product.id}
-                            aria-label={
-                              addedProductId === product.id
-                                ? `${product.name} added to cart`
-                                : `Add ${product.name} to cart`
-                            }
-                            title={
-                              addedProductId === product.id
-                                ? "Added to cart"
-                                : "Add to cart"
-                            }
-                            onClick={() => void handleAddToCart(product)}
-                          >
-                            <span aria-hidden="true">
-                              {addingProductId === product.id ? (
-                                <AddToCartloading />
-                              ) : addedProductId === product.id ? (
-                                "✓"
-                              ) : (
-                                "🛒"
-                              )}
-                            </span>
-                          </button>
+                          <div className="product-cart__purchase">
+                            <button
+                              className="product-cart__cart-button"
+                              type="button"
+                              disabled={addingProductId === product.id}
+                              aria-label={
+                                addedProductId === product.id
+                                  ? `${product.name} added to cart`
+                                  : `Add ${product.name} to cart`
+                              }
+                              title={
+                                addedProductId === product.id
+                                  ? "Added to cart"
+                                  : "Add to cart"
+                              }
+                              onClick={() => void handleAddToCart(product)}
+                            >
+                              <span aria-hidden="true">
+                                {addingProductId === product.id ? (
+                                  <AddToCartloading />
+                                )  : (
+                                  "🛒"
+                                )}
+                              </span>
+                            </button>
+                           
+                          
                         </div>
                       </div>
                     </article>
